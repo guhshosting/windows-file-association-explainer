@@ -1,0 +1,16 @@
+{
+ "$schema":"http://json-schema.org/draft-07/schema#",
+ "title":"windows-file-association-explainer report schema 1",
+ "type":"object","additionalProperties":false,
+ "required":["schema_version","version","query","extension","partial","effective_default","records","warnings"],
+ "properties":{
+  "schema_version":{"const":1},"version":{"const":"1.0.0"},"query":{"type":"string"},"extension":{"type":"string","pattern":"^\\."},"partial":{"type":"boolean"},
+  "effective_default":{"type":"object","additionalProperties":false,"required":["status","reason"],"properties":{"status":{"const":"unavailable"},"reason":{"type":"string"}}},
+  "records":{"type":"array","items":{"$ref":"#/definitions/record"}},"warnings":{"type":"array","items":{"type":"string"}}
+ },
+ "definitions":{
+  "value":{"type":"object","additionalProperties":false,"required":["name","type","text"],"properties":{"name":{"type":"string"},"type":{"type":"integer","minimum":0},"text":{"type":"string"}}},
+  "command":{"type":"object","additionalProperties":false,"required":["target","parse_status","presence","placeholders"],"properties":{"target":{"type":"string"},"parse_status":{"enum":["unresolved","empty","malformed_quotes","ambiguous_or_non_executable","relative_or_search_dependent","literal_absolute_executable"]},"presence":{"enum":["not_checked","present","missing","unsafe_path_not_checked","non_fixed_drive_not_checked","inaccessible_or_unknown","reparse_point_not_checked","directory_not_executable"]},"placeholders":{"type":"array","uniqueItems":true,"items":{"type":"string"}}}},
+  "record":{"type":"object","additionalProperties":false,"required":["layer","path","status","error","values","subkeys","commands"],"properties":{"layer":{"enum":["user","machine","merged","user_raw","machine_raw"]},"path":{"type":"string"},"status":{"enum":["ok","missing","inaccessible","error","partial"]},"error":{"type":"integer","minimum":0},"values":{"type":"array","items":{"$ref":"#/definitions/value"}},"subkeys":{"type":"array","items":{"type":"string"}},"commands":{"type":"array","items":{"$ref":"#/definitions/command"}}}}
+ }
+}

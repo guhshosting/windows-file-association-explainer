@@ -1,0 +1,45 @@
+cmake_minimum_required(VERSION 3.24)
+project(windows-file-association-explainer VERSION 1.0.0 LANGUAGES CXX RC)
+if(NOT WIN32 OR NOT MSVC)
+  message(FATAL_ERROR "Windows and an MSVC-compatible compiler are required")
+endif()
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+  message(FATAL_ERROR "Build the x64 release")
+endif()
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+option(WFA_ANALYZE "Enable MSVC static analysis" OFF)
+add_library(wfa_core src/core.cpp)
+target_include_directories(wfa_core PUBLIC src)
+add_executable(windows-file-association-explainer src/main.cpp src/windows.cpp src/version.rc)
+target_link_libraries(windows-file-association-explainer PRIVATE wfa_core advapi32)
+add_executable(wfa_tests tests/tests.cpp)
+target_link_libraries(wfa_tests PRIVATE wfa_core)
+add_executable(wfa_windows_tests tests/windows_tests.cpp src/windows.cpp)
+target_link_libraries(wfa_windows_tests PRIVATE wfa_core advapi32)
+foreach(target wfa_core windows-file-association-explainer wfa_tests wfa_windows_tests)
+  target_compile_definitions(${target} PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+  target_compile_options(${target} PRIVATE /W4 /WX /permissive- /utf-8 /sdl /guard:cf)
+  if(WFA_ANALYZE)
+    target_compile_options(${target} PRIVATE /analyze)
+  endif()
+endforeach()
+target_link_options(windows-file-association-explainer PRIVATE /DYNAMICBASE /NXCOMPAT /HIGHENTROPYVA /guard:cf)
+enable_testing()
+add_test(NAME fixtures COMMAND wfa_tests)
+add_test(NAME help COMMAND windows-file-association-explainer --help)
+add_test(NAME version COMMAND windows-file-association-explainer --version)
+
+
+add_test(NAME windows-readonly COMMAND wfa_windows_tests)
+
+
+# SDK 26100 invalid RegOpenKeyExW SAL declaration; see sdk-fixture reproduction.
+
+if(WFA_ANALYZE)
+  set_source_files_properties(src/windows.cpp PROPERTIES COMPILE_OPTIONS /wd6553)
+endif()
+
+
